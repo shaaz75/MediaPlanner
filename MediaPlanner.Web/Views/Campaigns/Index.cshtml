@@ -1,0 +1,214 @@
+﻿@model PaginatedList<MediaPlanner.Model.Campaign>
+
+@{
+    ViewData["Title"] = "Campaigns";
+}
+<script src="~/lib/jquery/dist/jquerylatest.js"></script>
+<script>
+    function pieChart() {
+        var result = @Html.Raw(@ViewBag.PieData);
+        var dataPoints = [];
+        for (var i = 0; i < result.length; i++) {
+            dataPoints.push({ x: result[i].CampaignName, y: result[i].Budget, label: result[i].CampaignName });
+        }
+        var chart = new CanvasJS.Chart("chartContainer", {
+            animationEnabled: true,
+            title: {
+                text: "Campaign & Budget Chart"
+            },
+            data: [
+                {
+                    type: "pie",
+                    indexLabel: "Camaign Name : {label} , Budget : {y}",
+                    dataPoints: dataPoints
+                }
+            ]
+        });
+        chart.render();
+    }
+    function barChart() {
+        var result = @Html.Raw(@ViewBag.PieData);
+        var dataPoints = [];
+        for (var i = 0; i < result.length; i++) {
+            dataPoints.push({ label: result[i].CampaignName, y: result[i].Budget });
+        }
+        console.log(dataPoints);
+        var chart = new CanvasJS.Chart("chartContainer1",
+            {
+                title: {
+                    text: "Campaign & Ads Chart"
+                },
+                axisY: {
+                    title: "Budget"
+                },
+                data: [
+                    {
+                        type: "column",
+                        legendText: "Campaigns",
+                        dataPoints: dataPoints
+                    }
+                ]
+            });
+        chart.render();
+    }
+
+
+    $(document).ready(function () {
+        pieChart();
+        barChart();
+    });
+</script>
+
+@*<h1 style="text-align:center;background-color:cornflowerblue; color:white">Index</h1>*@
+
+<p>
+    <input type="button" value="Create New" class="btn btn-warning" style="color:white" onclick="location.href='@Url.Action("Create", "Campaigns")'" />
+</p>
+
+<style type="text/css">
+    .searchTextbox {
+        display: inline-block;
+        width: 70%;
+    }
+</style>
+<div>
+    <div style="float:left">
+        @using (Html.BeginForm("Index", "Campaigns", new { @class = "form-group" }))
+        {
+            <p>
+                <div class="form-group">
+                    @Html.TextBox("searchString", null, new { @class = "form-control searchTextbox", @placeholder = "Search Campaign" })
+                    <input type="submit" value="Search" class="btn btn-primary" />
+                </div>
+
+            </p>
+        }
+    </div>
+    <div style="float:right">
+        <a href="@Url.Action("ExportToExcel")">
+            <img src="@Url.Content("~/images/excel.png")" style="width:30px; height:30px" title="Export to Excel" />
+        </a>
+    </div>
+</div>
+
+
+
+<script>
+    $(function () {
+        $("#tabs").tabs();
+    });
+</script>
+
+
+<div id="tabs" style="clear:both">
+    <ul>
+        <li>
+            <a href="#tabs-1">List View</a>
+        </li>
+        <li>
+            <a href="#tabs-2">Chart View</a>
+        </li>
+    </ul>
+    <div id="tabs-1">
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>
+                        @Html.DisplayNameFor(model => model.First().CampaignName)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.First().StartDateTime)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.First().EndDateTime)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.First().Budget)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.First().Client.ClientName)
+                    </th>
+                    <th>
+                        @Html.DisplayNameFor(model => model.First().Country.CountryName)
+                    </th>
+                    <th></th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in Model)
+                {
+                    <tr>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.CampaignName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.StartDateTime)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.EndDateTime)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Budget)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Client.ClientName)
+                        </td>
+                        <td>
+                            @Html.DisplayFor(modelItem => item.Country.CountryName)
+                        </td>
+                        <td>
+                            <a asp-action="Edit" asp-route-id="@item.CampaignId"><img src="~/Images/edit.jpg" title="Edit" style="width:20px;height:20px" /></a> |
+                            <a asp-action="Details" asp-route-id="@item.CampaignId"><img src="~/Images/details.png" title="Details" style="width:15px;height:15px" /></a> |
+                            <a asp-action="Delete" asp-route-id="@item.CampaignId"><img src="~/Images/delete.png" title="Delete" style="width:15px;height:15px" /></a> |
+                            <a asp-action="AdSetsByCampaignId" asp-route-id="@item.CampaignId">AdSet</a>
+                        </td>
+                    </tr>
+                }
+            </tbody>
+        </table>
+        @{
+            var prevDisabled = !Model.HasPreviousPage ? "disabled" : "";
+            var nextDisabled = !Model.HasNextPage ? "disabled" : "";
+        }
+
+        <a asp-action="Index"
+           asp-route-sortOrder="@ViewData["CurrentSort"]"
+           asp-route-page="@(Model.PageIndex - 1)"
+           asp-route-currentFilter="@ViewData["CurrentFilter"]"
+           class="btn btn-default @prevDisabled">
+            Previous
+        </a>
+        <a asp-action="Index"
+           asp-route-sortOrder="@ViewData["CurrentSort"]"
+           asp-route-page="@(Model.PageIndex + 1)"
+           asp-route-currentFilter="@ViewData["CurrentFilter"]"
+           class="btn btn-default @nextDisabled">
+            Next
+        </a>
+    </div>
+    <div id="tabs-2" style="clear:both">
+        <div class="row">
+            <div class="col-6">
+                <div id="chartContainer" style="height: 300px; width: 300px;"></div>
+            </div>
+            <div class="col-6">
+                <div id="chartContainer1" style="height: 300px; width: 300px;"></div>
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<div id="myModal" class="modal">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <partial name="CreatePartial" model="@ViewBag.PartialCreate" />
+            @*@Html.Partial("CreatePartial",@ViewBag.PartialCreate)*@
+        </div>
+    </div>
+
+</div>
+
+<script type="text/javascript">
+    $(document).ready(function () { $('#myModal').modal("show") });
+</script>
